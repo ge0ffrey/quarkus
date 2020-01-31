@@ -17,6 +17,7 @@ import org.optaplanner.core.api.score.stream.ConstraintProvider;
 import org.optaplanner.core.api.score.stream.ConstraintStreamImplType;
 import org.optaplanner.core.config.score.director.ScoreDirectorFactoryConfig;
 import org.optaplanner.core.config.solver.SolverConfig;
+import org.optaplanner.core.config.solver.termination.TerminationConfig;
 
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.BeanContainerListenerBuildItem;
@@ -79,9 +80,11 @@ class OptaPlannerProcessor {
 
     private void applySolverProperties(OptaPlannerRecorder recorder, RecorderContext recorderContext,
             IndexView indexView, SolverConfig solverConfig) {
-        //        if (solverProperties.getEnvironmentMode() != null) {
-        //            solverConfig.setEnvironmentMode(solverProperties.getEnvironmentMode());
-        //        }
+        if (solverConfig.getScanAnnotatedClassesConfig() != null) {
+            throw new IllegalArgumentException("Do not use scanAnnotatedClasses with the Quarkus extension,"
+                    + " because the Quarkus extension scans too.\n"
+                    + "Maybe delete the scanAnnotatedClasses element in the solver config.");
+        }
         if (solverConfig.getSolutionClass() == null) {
             solverConfig.setSolutionClass(findSolutionClass(recorderContext, indexView));
         }
@@ -95,7 +98,9 @@ class OptaPlannerProcessor {
             scoreDirectorFactoryConfig.setConstraintProviderClass(findConstraintProviderClass(recorderContext, indexView));
             solverConfig.setScoreDirectorFactoryConfig(scoreDirectorFactoryConfig);
         }
-        //        applyTerminationProperties(solverConfig);
+        optaPlannerQuarkusConfig.solver.environmentMode.ifPresent(solverConfig::setEnvironmentMode);
+        optaPlannerQuarkusConfig.solver.moveThreadCount.ifPresent(solverConfig::setMoveThreadCount);
+        applyTerminationProperties(solverConfig);
     }
 
     private Class<?> findSolutionClass(RecorderContext recorderContext, IndexView indexView) {
@@ -149,6 +154,17 @@ class OptaPlannerProcessor {
         }
         // TODO use .asSubclass(ConstraintProvider.class) once https://github.com/quarkusio/quarkus/issues/5630 is fixed
         return (Class<? extends ConstraintProvider>) recorderContext.classProxy(classInfos.iterator().next().name().toString());
+    }
+
+    private void applyTerminationProperties(SolverConfig solverConfig) {
+        TerminationConfig terminationConfig = solverConfig.getTerminationConfig();
+        if (terminationConfig == null) {
+            terminationConfig = new TerminationConfig();
+            solverConfig.setTerminationConfig(terminationConfig);
+        }
+        optaPlannerQuarkusConfig.solver.termination.spentLimit.ifPresent(terminationConfig::setSpentLimit);
+        optaPlannerQuarkusConfig.solver.termination.unimprovedSpentLimit.ifPresent(terminationConfig::setUnimprovedSpentLimit);
+        optaPlannerQuarkusConfig.solver.termination.bestScoreLimit.ifPresent(terminationConfig::setBestScoreLimit);
     }
 
     private String convertAnnotationInstancesToString(Collection<AnnotationInstance> annotationInstances) {
