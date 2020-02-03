@@ -188,8 +188,10 @@ class OptaPlannerProcessor {
             Class.forName("org.optaplanner.persistence.jackson.api.OptaPlannerJacksonModule", false,
                     Thread.currentThread().getContextClassLoader());
         } catch (Exception e) {
+            // Fail fast during build to avoid a certain runtime failure
             throw new IllegalStateException(
-                    "When using both Jackson and OptaPlanner, add the dependency org.optaplanner:optaplanner-persistence-jackson too.",
+                    "When using both Jackson and OptaPlanner,"
+                    + " add a dependency on org.optaplanner:optaplanner-persistence-jackson too.",
                     e);
         }
         additionalBeans.produce(new AdditionalBeanBuildItem(OptaPlannerObjectMapperCustomizer.class));
