@@ -41,7 +41,7 @@ public class OptaPlannerProcessorXMLNoneTest {
         assertEquals(TestdataPlanningConstraintProvider.class,
                 solverConfig.getScoreDirectorFactoryConfig().getConstraintProviderClass());
         // No termination defined (solverConfig.xml isn't included)
-        assertNull(solverConfig.getTerminationConfig());
+        assertNull(solverConfig.getTerminationConfig().getSecondsSpentLimit());
         assertNotNull(solverFactory);
         assertNotNull(solverFactory.buildSolver());
     }

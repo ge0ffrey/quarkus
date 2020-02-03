@@ -2,9 +2,10 @@ package io.quarkus.optaplanner.deployment;
 
 import java.util.Optional;
 
+import org.optaplanner.core.config.solver.SolverManagerConfig;
+
 import io.quarkus.runtime.annotations.ConfigGroup;
 import io.quarkus.runtime.annotations.ConfigItem;
-import org.optaplanner.core.config.solver.SolverManagerConfig;
 
 /**
  * Subset of OptaPlanner's {@link SolverManagerConfig}.

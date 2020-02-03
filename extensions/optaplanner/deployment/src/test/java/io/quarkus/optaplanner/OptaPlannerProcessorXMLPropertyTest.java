@@ -23,7 +23,7 @@ public class OptaPlannerProcessorXMLPropertyTest {
 
     @RegisterExtension
     static final QuarkusUnitTest config = new QuarkusUnitTest()
-            .overrideConfigKey("quarkus.optaplanner.solverConfigXml", "io/quarkus/optaplanner/customSolverConfig.xml")
+            .overrideConfigKey("quarkus.optaplanner.solver-config-xml", "io/quarkus/optaplanner/customSolverConfig.xml")
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(TestdataPlanningEntity.class,
                             TestdataPlanningSolution.class, TestdataPlanningConstraintProvider.class)

@@ -21,19 +21,18 @@ import org.optaplanner.core.config.solver.termination.TerminationConfig;
 
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.BeanContainerListenerBuildItem;
+import io.quarkus.deployment.Capabilities;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.recording.RecorderContext;
-import io.quarkus.jackson.spi.ClassPathJacksonModuleBuildItem;
 import io.quarkus.optaplanner.OptaPlannerBeanProvider;
+import io.quarkus.optaplanner.OptaPlannerObjectMapperCustomizer;
 import io.quarkus.optaplanner.OptaPlannerRecorder;
 
 class OptaPlannerProcessor {
-
-    private static final String OPTAPLANNER_JACKSON_MODULE = "org.optaplanner.persistence.jackson.api.OptaPlannerJacksonModule";
 
     OptaPlannerQuarkusConfig optaPlannerQuarkusConfig;
 
@@ -180,14 +179,23 @@ class OptaPlannerProcessor {
     // TODO health check
 
     @BuildStep
-    void registerOptaPlannerJacksonModule(BuildProducer<ClassPathJacksonModuleBuildItem> classPathJacksonModules) {
-        try {
-            Class.forName(OPTAPLANNER_JACKSON_MODULE, false, Thread.currentThread().getContextClassLoader());
-        } catch (Exception ignored) {
+    void registerOptaPlannerJacksonModule(BuildProducer<AdditionalBeanBuildItem> additionalBeans,
+            Capabilities capabilities) {
+        if (!capabilities.isCapabilityPresent(Capabilities.JACKSON)) {
             return;
         }
-        classPathJacksonModules.produce(new ClassPathJacksonModuleBuildItem(OPTAPLANNER_JACKSON_MODULE));
+        try {
+            Class.forName("org.optaplanner.persistence.jackson.api.OptaPlannerJacksonModule", false,
+                    Thread.currentThread().getContextClassLoader());
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "When using both Jackson and OptaPlanner, add the dependency org.optaplanner:optaplanner-persistence-jackson too.",
+                    e);
+        }
+        additionalBeans.produce(new AdditionalBeanBuildItem(OptaPlannerObjectMapperCustomizer.class));
     }
+
+    // TODO JAXB customization for Score.class
 
     // TODO JPA customization for Score.class
 

@@ -3,9 +3,10 @@ package io.quarkus.optaplanner.deployment;
 import java.time.Duration;
 import java.util.Optional;
 
+import org.optaplanner.core.config.solver.termination.TerminationConfig;
+
 import io.quarkus.runtime.annotations.ConfigGroup;
 import io.quarkus.runtime.annotations.ConfigItem;
-import org.optaplanner.core.config.solver.termination.TerminationConfig;
 
 /**
  * Subset of OptaPlanner's {@link TerminationConfig}.
