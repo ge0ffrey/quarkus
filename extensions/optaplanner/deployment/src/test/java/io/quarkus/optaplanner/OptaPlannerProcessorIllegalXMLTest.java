@@ -14,7 +14,6 @@ public class OptaPlannerProcessorIllegalXMLTest {
 
     @RegisterExtension
     static final QuarkusUnitTest config = new QuarkusUnitTest()
-            .setExpectedException(IllegalArgumentException.class)
             .overrideConfigKey("quarkus.optaplanner.solver-config-xml",
                     "io/quarkus/optaplanner/illegalScanAnnotatedSolverConfig.xml")
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
