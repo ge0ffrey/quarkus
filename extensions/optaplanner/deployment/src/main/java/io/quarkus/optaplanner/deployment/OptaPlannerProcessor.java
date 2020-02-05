@@ -3,9 +3,12 @@ package io.quarkus.optaplanner.deployment;
 import static io.quarkus.deployment.annotations.ExecutionTime.STATIC_INIT;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.AnnotationTarget;
 import org.jboss.jandex.ClassInfo;
@@ -71,7 +74,11 @@ class OptaPlannerProcessor {
         solverConfig.setClassLoader(null); // TODO HACK
 
         IndexView indexView = combinedIndex.getIndex();
-        applySolverProperties(recorder, recorderContext, indexView, solverConfig);
+
+        // Skips extension if no @PlanningEntity or @PlanningSolution classes were found
+        if (!applySolverProperties(recorder, recorderContext, indexView, solverConfig)) {
+            return;
+        }
 
         SolverManagerConfig solverManagerConfig = new SolverManagerConfig();
         optaPlannerQuarkusConfig.solverManager.parallelSolverCount.ifPresent(solverManagerConfig::setParallelSolverCount);
@@ -80,18 +87,38 @@ class OptaPlannerProcessor {
                         recorder.initialize(solverConfig, solverManagerConfig)));
     }
 
-    private void applySolverProperties(OptaPlannerRecorder recorder, RecorderContext recorderContext,
+    private boolean applySolverProperties(OptaPlannerRecorder recorder, RecorderContext recorderContext,
             IndexView indexView, SolverConfig solverConfig) {
         if (solverConfig.getScanAnnotatedClassesConfig() != null) {
             throw new IllegalArgumentException("Do not use scanAnnotatedClasses with the Quarkus extension,"
                     + " because the Quarkus extension scans too.\n"
                     + "Maybe delete the scanAnnotatedClasses element in the solver config.");
         }
+
+        // Fail fast if solution class exists but not entity class, and vice versa. If both don't exist, skip extension
+        Pair<Class<?>, Boolean> solutionClassResult = findSolutionClassResult(recorderContext, indexView);
+        List<Class<?>> entityClassList = findEntityClassList(recorderContext, indexView);
+
+        Boolean doesSolutionClassExist = solutionClassResult.getRight();
+        Boolean doesEntityClassExist = !entityClassList.isEmpty();
+
+        if (doesSolutionClassExist && !doesEntityClassExist) {
+            throw new IllegalStateException("A class with a @" + PlanningSolution.class.getSimpleName()
+                    + " annotation was found, but no classes with a @" + PlanningEntity.class.getSimpleName()
+                    + " annotation was found.");
+        } else if (doesEntityClassExist && !doesSolutionClassExist) {
+            throw new IllegalStateException("A class with a @" + PlanningEntity.class.getSimpleName()
+                    + " annotation was found, but no classes with a @" + PlanningSolution.class.getSimpleName()
+                    + " annotation was found.");
+        } else if (!doesSolutionClassExist && !doesEntityClassExist) {
+            return false;
+        }
+
         if (solverConfig.getSolutionClass() == null) {
-            solverConfig.setSolutionClass(findSolutionClass(recorderContext, indexView));
+            solverConfig.setSolutionClass(solutionClassResult.getLeft());
         }
         if (solverConfig.getEntityClassList() == null) {
-            solverConfig.setEntityClassList(findEntityClassList(recorderContext, indexView));
+            solverConfig.setEntityClassList(entityClassList);
         }
         if (solverConfig.getScoreDirectorFactoryConfig() == null) {
             ScoreDirectorFactoryConfig scoreDirectorFactoryConfig = new ScoreDirectorFactoryConfig();
@@ -103,32 +130,32 @@ class OptaPlannerProcessor {
         optaPlannerQuarkusConfig.solver.environmentMode.ifPresent(solverConfig::setEnvironmentMode);
         optaPlannerQuarkusConfig.solver.moveThreadCount.ifPresent(solverConfig::setMoveThreadCount);
         applyTerminationProperties(solverConfig);
+        return true;
     }
 
-    private Class<?> findSolutionClass(RecorderContext recorderContext, IndexView indexView) {
+    private Pair<Class<?>, Boolean> findSolutionClassResult(RecorderContext recorderContext, IndexView indexView) {
         Collection<AnnotationInstance> annotationInstances = indexView.getAnnotations(DotNames.PLANNING_SOLUTION);
         if (annotationInstances.size() > 1) {
             throw new IllegalStateException("Multiple classes (" + convertAnnotationInstancesToString(annotationInstances)
                     + ") found with a @" + PlanningSolution.class.getSimpleName() + " annotation.");
         }
         if (annotationInstances.isEmpty()) {
-            throw new IllegalStateException("No classes (" + convertAnnotationInstancesToString(annotationInstances)
-                    + ") found with a @" + PlanningSolution.class.getSimpleName() + " annotation.");
+            return new ImmutablePair<>(null, false);
         }
+
         AnnotationTarget solutionTarget = annotationInstances.iterator().next().target();
         if (solutionTarget.kind() != AnnotationTarget.Kind.CLASS) {
             throw new IllegalStateException("A target (" + solutionTarget
                     + ") with a @" + PlanningSolution.class.getSimpleName() + " must be a class.");
         }
 
-        return recorderContext.classProxy(solutionTarget.asClass().name().toString());
+        return new ImmutablePair<>(recorderContext.classProxy(solutionTarget.asClass().name().toString()), true);
     }
 
     private List<Class<?>> findEntityClassList(RecorderContext recorderContext, IndexView indexView) {
         Collection<AnnotationInstance> annotationInstances = indexView.getAnnotations(DotNames.PLANNING_ENTITY);
         if (annotationInstances.isEmpty()) {
-            throw new IllegalStateException("No classes (" + convertAnnotationInstancesToString(annotationInstances)
-                    + ") found with a @" + PlanningEntity.class.getSimpleName() + " annotation.");
+            return Collections.emptyList();
         }
         List<AnnotationTarget> targetList = annotationInstances.stream()
                 .map(AnnotationInstance::target)
