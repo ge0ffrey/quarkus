@@ -8,15 +8,21 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkus.test.QuarkusUnitTest;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public class OptaPlannerProcessorIllegalXMLTest {
 
     @RegisterExtension
     static final QuarkusUnitTest config = new QuarkusUnitTest()
             .setExpectedException(IllegalArgumentException.class)
-            .overrideConfigKey("quarkus.optaplanner.solver-config-xml", "io/quarkus/optaplanner/" +
-                    "illegalScanAnnotatedSolverConfig.xml")
+            .overrideConfigKey("quarkus.optaplanner.solver-config-xml",
+                    "io/quarkus/optaplanner/illegalScanAnnotatedSolverConfig.xml")
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
-                    .addAsResource("io/quarkus/optaplanner/illegalScanAnnotatedSolverConfig.xml"));
+                    .addAsResource("io/quarkus/optaplanner/illegalScanAnnotatedSolverConfig.xml"))
+            .assertException(throwable -> {
+                assertTrue(throwable instanceof IllegalArgumentException);
+                assertTrue(throwable.getMessage().contains("scanAnnotatedClasses"));
+            });
 
     @Test
     public void scanAnnotatedClasses() {
