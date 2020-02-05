@@ -1,15 +1,15 @@
 package io.quarkus.optaplanner;
 
-import java.util.Collections;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
 import javax.inject.Inject;
 
-import io.quarkus.optaplanner.constraints.TestdataPlanningConstraintProvider;
-import io.quarkus.optaplanner.domain.TestdataPlanningEntity;
-import io.quarkus.optaplanner.domain.TestdataPlanningSolution;
-import io.quarkus.test.QuarkusUnitTest;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.jupiter.api.Test;
@@ -18,13 +18,12 @@ import org.optaplanner.core.api.score.ScoreManager;
 import org.optaplanner.core.api.solver.SolverFactory;
 import org.optaplanner.core.api.solver.SolverJob;
 import org.optaplanner.core.api.solver.SolverManager;
-import org.optaplanner.core.config.solver.SolverConfig;
 import org.optaplanner.core.impl.solver.DefaultSolverManager;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import io.quarkus.optaplanner.constraints.TestdataPlanningConstraintProvider;
+import io.quarkus.optaplanner.domain.TestdataPlanningEntity;
+import io.quarkus.optaplanner.domain.TestdataPlanningSolution;
+import io.quarkus.test.QuarkusUnitTest;
 
 public class OptaPlannerProcessorSolveTest {
 
@@ -52,7 +51,7 @@ public class OptaPlannerProcessorSolveTest {
         // There is only one SolverFactory instance
         assertSame(solverFactory, ((DefaultSolverManager<TestdataPlanningSolution, Long>) solverManager).getSolverFactory());
     }
-    
+
     @Test
     public void solve() throws ExecutionException, InterruptedException {
         TestdataPlanningSolution problem = new TestdataPlanningSolution();

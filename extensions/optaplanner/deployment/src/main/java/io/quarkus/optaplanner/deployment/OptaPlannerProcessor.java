@@ -194,7 +194,7 @@ class OptaPlannerProcessor {
             // Fail fast during build to avoid a certain runtime failure
             throw new IllegalStateException(
                     "When using both Jackson and OptaPlanner,"
-                    + " add a dependency on org.optaplanner:optaplanner-persistence-jackson too.",
+                            + " add a dependency on org.optaplanner:optaplanner-persistence-jackson too.",
                     e);
         }
         additionalBeans.produce(new AdditionalBeanBuildItem(OptaPlannerObjectMapperCustomizer.class));

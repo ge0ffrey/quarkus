@@ -7,9 +7,9 @@ import org.optaplanner.core.api.score.ScoreManager;
 import org.optaplanner.core.api.solver.SolverFactory;
 import org.optaplanner.core.api.solver.SolverManager;
 import org.optaplanner.core.config.solver.SolverConfig;
+import org.optaplanner.core.config.solver.SolverManagerConfig;
 
 import io.quarkus.arc.DefaultBean;
-import org.optaplanner.core.config.solver.SolverManagerConfig;
 
 public class OptaPlannerBeanProvider {
 
