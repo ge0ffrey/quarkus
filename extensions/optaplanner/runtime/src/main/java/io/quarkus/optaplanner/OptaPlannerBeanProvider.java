@@ -3,15 +3,18 @@ package io.quarkus.optaplanner;
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 
+import org.optaplanner.core.api.score.ScoreManager;
 import org.optaplanner.core.api.solver.SolverFactory;
+import org.optaplanner.core.api.solver.SolverManager;
 import org.optaplanner.core.config.solver.SolverConfig;
 
 import io.quarkus.arc.DefaultBean;
+import org.optaplanner.core.config.solver.SolverManagerConfig;
 
-public class OptaPlannerBeanProvider<Solution_> {
+public class OptaPlannerBeanProvider {
 
-    static SolverConfig solverConfig;
-    static SolverFactory<?> solverFactory;
+    static volatile SolverConfig solverConfig;
+    static volatile SolverManagerConfig solverManagerConfig;
 
     @DefaultBean
     @Singleton
@@ -23,8 +26,22 @@ public class OptaPlannerBeanProvider<Solution_> {
     @DefaultBean
     @Singleton
     @Produces
-    SolverFactory<Solution_> solverFactory() {
-        return (SolverFactory<Solution_>) solverFactory;
+    <Solution_> SolverFactory<Solution_> solverFactory() {
+        return SolverFactory.create(solverConfig);
+    }
+
+    @DefaultBean
+    @Singleton
+    @Produces
+    <Solution_, ProblemId_> SolverManager<Solution_, ProblemId_> solverManager(SolverFactory<Solution_> solverFactory) {
+        return SolverManager.create(solverFactory, solverManagerConfig);
+    }
+
+    @DefaultBean
+    @Singleton
+    @Produces
+    <Solution_> ScoreManager<Solution_> scoreManager(SolverFactory<Solution_> solverFactory) {
+        return ScoreManager.create(solverFactory);
     }
 
 }

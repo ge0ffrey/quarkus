@@ -17,6 +17,7 @@ import org.optaplanner.core.api.score.stream.ConstraintProvider;
 import org.optaplanner.core.api.score.stream.ConstraintStreamImplType;
 import org.optaplanner.core.config.score.director.ScoreDirectorFactoryConfig;
 import org.optaplanner.core.config.solver.SolverConfig;
+import org.optaplanner.core.config.solver.SolverManagerConfig;
 import org.optaplanner.core.config.solver.termination.TerminationConfig;
 
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
@@ -72,9 +73,11 @@ class OptaPlannerProcessor {
         IndexView indexView = combinedIndex.getIndex();
         applySolverProperties(recorder, recorderContext, indexView, solverConfig);
 
+        SolverManagerConfig solverManagerConfig = new SolverManagerConfig();
+        optaPlannerQuarkusConfig.solverManager.parallelSolverCount.ifPresent(solverManagerConfig::setParallelSolverCount);
         beanContainerListener
                 .produce(new BeanContainerListenerBuildItem(
-                        recorder.initialize(solverConfig)));
+                        recorder.initialize(solverConfig, solverManagerConfig)));
     }
 
     private void applySolverProperties(OptaPlannerRecorder recorder, RecorderContext recorderContext,
