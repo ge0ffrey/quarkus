@@ -141,7 +141,7 @@
         <module>liquibase</module>
 
         <!-- Business automation -->
-        <module>kogito</module>
+<!--        <module>kogito</module>-->
         <module>optaplanner</module>
         <module>optaplanner-jackson</module>
 

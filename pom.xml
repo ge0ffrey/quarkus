@@ -68,7 +68,7 @@
         <module>integration-tests</module>
 
         <!-- Misc. -->
-        <module>docs</module>
+<!--        <module>docs</module>-->
     </modules>
 
     <repositories>
